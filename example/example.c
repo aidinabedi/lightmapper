@@ -3,7 +3,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+
+#ifndef LM_USE_GLES
 #include "glad/glad.h"
+#endif
+
 #include "GLFW/glfw3.h"
 
 #define LIGHTMAPPER_IMPLEMENTATION
@@ -108,7 +112,7 @@ static int bake(scene_t *scene)
 
 	// upload result
 	glBindTexture(GL_TEXTURE_2D, scene->lightmap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_FLOAT, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, data);
 	free(data);
 
 	return 1;
@@ -161,8 +165,13 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_ALPHA_BITS, 8);
 	glfwWindowHint(GLFW_DEPTH_BITS, 32);
 	glfwWindowHint(GLFW_STENCIL_BITS, GLFW_DONT_CARE);
+#ifdef LM_USE_GLES
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#else
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#endif
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
@@ -177,7 +186,9 @@ int main(int argc, char* argv[])
 	}
 
 	glfwMakeContextCurrent(window);
+#ifndef LM_USE_GLES
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+#endif
 	glfwSwapInterval(1);
 
 	scene_t scene = {0};
