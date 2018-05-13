@@ -1216,26 +1216,38 @@ lm_context *lmCreate(int hemisphereSize, float zNear, float zFar,
 	// hemisphere shader (weighted downsampling of the 3x1 hemisphere layout to a 0.5x0.5 square)
 	{
 		const char *vs =
+#ifdef LM_USE_GLES
+			"#version 300 es\n"
+			"precision highp float;\n"
+#else
 			"#version 150 core\n"
+#endif
 			"const vec2 ps[4] = vec2[](vec2(1, -1), vec2(1, 1), vec2(-1, -1), vec2(-1, 1));\n"
 			"void main()\n"
 			"{\n"
 				"gl_Position = vec4(ps[gl_VertexID], 0, 1);\n"
 			"}\n";
 		const char *fs =
+#ifdef LM_USE_GLES
+			"#version 300 es\n"
+			"precision highp float;\n"
+#else
 			"#version 150 core\n"
+#endif
 			"uniform sampler2D hemispheres;\n"
 			"uniform sampler2D weights;\n"
 
+#ifndef LM_USE_GLES
 			"layout(pixel_center_integer) in vec4 gl_FragCoord;\n" // whole integer values represent pixel centers, GL_ARB_fragment_coord_conventions
+#endif
 
 			"out vec4 outColor;\n"
 
 			"vec4 weightedSample(ivec2 h_uv, ivec2 w_uv, ivec2 quadrant)\n"
 			"{\n"
-				"vec4 sample = texelFetch(hemispheres, h_uv + quadrant, 0);\n"
+				"vec4 sampled = texelFetch(hemispheres, h_uv + quadrant, 0);\n"
 				"vec2 weight = texelFetch(weights, w_uv + quadrant, 0).rg;\n"
-				"return vec4(sample.rgb * weight.r, sample.a * weight.g);\n"
+				"return vec4(sampled.rgb * weight.r, sampled.a * weight.g);\n"
 			"}\n"
 
 			"vec4 threeWeightedSamples(ivec2 h_uv, ivec2 w_uv, ivec2 offset)\n"
@@ -1275,18 +1287,29 @@ lm_context *lmCreate(int hemisphereSize, float zNear, float zFar,
 	// downsample shader
 	{
 		const char *vs =
+#ifdef LM_USE_GLES
+			"#version 300 es\n"
+			"precision highp float;\n"
+#else
 			"#version 150 core\n"
+#endif
 			"const vec2 ps[4] = vec2[](vec2(1, -1), vec2(1, 1), vec2(-1, -1), vec2(-1, 1));\n"
 			"void main()\n"
 			"{\n"
 				"gl_Position = vec4(ps[gl_VertexID], 0, 1);\n"
 			"}\n";
 		const char *fs =
+#ifdef LM_USE_GLES
+			"#version 300 es\n"
+			"precision highp float;\n"
+#else
 			"#version 150 core\n"
+#endif
 			"uniform sampler2D hemispheres;\n"
 
+#ifndef LM_USE_GLES
 			"layout(pixel_center_integer) in vec4 gl_FragCoord;\n" // whole integer values represent pixel centers, GL_ARB_fragment_coord_conventions
-
+#endif
 			"out vec4 outColor;\n"
 
 			"void main()\n"

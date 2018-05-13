@@ -250,7 +250,12 @@ static int initScene(scene_t *scene)
 
 	// load shader
 	const char *vp =
+#ifdef LM_USE_GLES
+		"#version 300 es\n"
+		"precision highp float;\n"
+#else
 		"#version 150 core\n"
+#endif
 		"in vec3 a_position;\n"
 		"in vec2 a_texcoord;\n"
 		"uniform mat4 u_view;\n"
@@ -264,7 +269,12 @@ static int initScene(scene_t *scene)
 		"}\n";
 
 	const char *fp =
+#ifdef LM_USE_GLES
+		"#version 300 es\n"
+		"precision highp float;\n"
+#else
 		"#version 150 core\n"
+#endif
 		"in vec2 v_texcoord;\n"
 		"uniform sampler2D u_lightmap;\n"
 		"out vec4 o_color;\n"
