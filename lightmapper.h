@@ -355,6 +355,7 @@ struct lm_context
 		struct
 		{
 			GLuint texture;
+			GLuint fbRead;
 			lm_ivec2 writePosition;
 			lm_ivec2 *toLightmapLocation;
 		} storage;
@@ -710,8 +711,9 @@ static void lm_writeResultsToLightmap(lm_context *ctx)
 {
 	// do the GPU->CPU transfer of downsampled hemispheres
 	float *hemi = (float*)LM_CALLOC(ctx->lightmap.width * ctx->lightmap.height, 4 * sizeof(float));
-	glBindTexture(GL_TEXTURE_2D, ctx->hemisphere.storage.texture);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, hemi);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, ctx->hemisphere.storage.fbRead);
+	glReadPixels(0, 0, ctx->lightmap.width, ctx->lightmap.height, GL_RGBA, GL_FLOAT, hemi);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 	// write results to lightmap texture
 	for (int y = 0; y < ctx->hemisphere.storage.writePosition.y + (int)ctx->hemisphere.fbHemiCountY; y++)
@@ -1444,6 +1446,11 @@ void lmSetTargetLightmap(lm_context *ctx, float *outLightmap, int w, int h, int 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, 0);
+	if (!ctx->hemisphere.storage.fbRead)
+		glGenFramebuffers(1, &ctx->hemisphere.storage.fbRead);
+	glBindFramebuffer(GL_FRAMEBUFFER, ctx->hemisphere.storage.fbRead);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ctx->hemisphere.storage.texture, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// allocate storage position to lightmap position map
 	if (ctx->hemisphere.storage.toLightmapLocation)
